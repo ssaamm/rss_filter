@@ -45,7 +45,8 @@ known_feeds = {
     'highscalability': FilteredFeed(url='https://feeds.feedburner.com/HighScalability?format=xml',
                                     title_disqualifiers=['Sponsored Post']),
     'ourdailybears': FilteredFeed(url='http://www.ourdailybears.com/rss/current',
-                                  title_disqualifiers=['Game Thread', 'Podcast Episode', 'Open Thread']),
+                                  title_disqualifiers=['Game Thread', 'Podcast Episode', 'Open Thread',
+                                                       'Facebook Live']),
     'dappered': FilteredFeed(url='https://dappered.com/feed/',
                              title_disqualifiers=["thanks to Dappered's advertisers"])
 }
