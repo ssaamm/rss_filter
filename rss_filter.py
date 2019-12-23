@@ -42,6 +42,8 @@ def build_rss_item(feedparser_item):
                        source=None)
 
 known_feeds = {
+    'churning': FilteredFeed(url='http://reddit.project.samueltaylor.org/sub/churning',
+                             title_disqualifiers=['Thread - ', '- Week of']),
     'highscalability': FilteredFeed(url='https://feeds.feedburner.com/HighScalability?format=xml',
                                     title_disqualifiers=['Sponsored Post']),
     'ourdailybears': FilteredFeed(url='http://www.ourdailybears.com/rss/current',
