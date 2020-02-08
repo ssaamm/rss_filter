@@ -23,7 +23,12 @@ def remove_items(entries, title_includes=[]):
 
 def datetime_from_struct_time(st: time.struct_time):
     return dt.datetime(
-        year=st.tm_year, month=st.tm_mon, day=st.tm_mday, hour=st.tm_hour, minute=st.tm_min, second=st.tm_sec
+        year=st.tm_year,
+        month=st.tm_mon,
+        day=st.tm_mday,
+        hour=st.tm_hour,
+        minute=st.tm_min,
+        second=st.tm_sec,
     )
 
 
@@ -32,33 +37,43 @@ def build_rss_item(feedparser_item):
     if "content" in feedparser_item:
         if len(feedparser_item["content"]) > 1:
             logging.warning("more content than expected")
-        description = "<br>".join(c["value"] for c in feedparser_item["content"] if c["type"] == "text/html")
+        description = "<br>".join(
+            c["value"] for c in feedparser_item["content"] if c["type"] == "text/html"
+        )
 
-    return rss.RSSItem(
+    x = rss.RSSItem(
         title=feedparser_item["title"],
         link=feedparser_item["link"],
         description=description,
         author=feedparser_item["author"],
         categories=[tag["term"] for tag in feedparser_item.get("tags", [])],
-        guid=feedparser_item["id"],
         pubDate=datetime_from_struct_time(feedparser_item["published_parsed"]),
         source=None,
     )
+    return x
 
 
 known_feeds = {
     "churning": FilteredFeed(
-        url="http://reddit.project.samueltaylor.org/sub/churning", title_disqualifiers=["Thread - ", "- Week of"]
+        url="http://reddit.project.samueltaylor.org/sub/churning",
+        title_disqualifiers=["Thread - ", "- Week of"],
     ),
     "highscalability": FilteredFeed(
-        url="https://feeds.feedburner.com/HighScalability?format=xml", title_disqualifiers=["Sponsored Post"]
+        url="https://feeds.feedburner.com/HighScalability?format=xml",
+        title_disqualifiers=["Sponsored Post"],
     ),
     "ourdailybears": FilteredFeed(
         url="http://www.ourdailybears.com/rss/current",
-        title_disqualifiers=["Game Thread", "Podcast Episode", "Open Thread", "Facebook Live"],
+        title_disqualifiers=[
+            "Game Thread",
+            "Podcast Episode",
+            "Open Thread",
+            "Facebook Live",
+        ],
     ),
     "dappered": FilteredFeed(
-        url="https://dappered.com/feed/", title_disqualifiers=["thanks to Dappered's advertisers"]
+        url="https://dappered.com/feed/",
+        title_disqualifiers=["thanks to Dappered's advertisers"],
     ),
 }
 
@@ -83,7 +98,9 @@ def filter_feed(name):
             lastBuildDate=dt.datetime.utcnow(),
             items=[
                 build_rss_item(entry)
-                for entry in remove_items(input_feed["entries"], title_includes=feed.title_disqualifiers)
+                for entry in remove_items(
+                    input_feed["entries"], title_includes=feed.title_disqualifiers
+                )
             ],
         )
 
