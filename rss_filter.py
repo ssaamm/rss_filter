@@ -7,7 +7,7 @@ import PyRSS2Gen as rss
 import feedparser
 from flask import Flask, abort
 
-FilteredFeed = namedtuple("FilteredFeed", "url title_disqualifiers")
+FilteredFeed = namedtuple("FilteredFeed", "url title_disqualifiers title_qualifiers")
 
 app = Flask(__name__)
 
@@ -21,14 +21,19 @@ def remove_items(entries, title_includes=[]):
         yield entry
 
 
+def include_items(entries, title_includes=[]):
+    if not title_includes:
+        yield from entries
+
+    for entry in entries:
+        if any(phrase.lower() in entry["title"].lower() for phrase in title_includes):
+            logging.info("included %s", entry["title"])
+            yield entry
+
+
 def datetime_from_struct_time(st: time.struct_time):
     return dt.datetime(
-        year=st.tm_year,
-        month=st.tm_mon,
-        day=st.tm_mday,
-        hour=st.tm_hour,
-        minute=st.tm_min,
-        second=st.tm_sec,
+        year=st.tm_year, month=st.tm_mon, day=st.tm_mday, hour=st.tm_hour, minute=st.tm_min, second=st.tm_sec,
     )
 
 
@@ -37,9 +42,7 @@ def build_rss_item(feedparser_item):
     if "content" in feedparser_item:
         if len(feedparser_item["content"]) > 1:
             logging.warning("more content than expected")
-        description = "<br>".join(
-            c["value"] for c in feedparser_item["content"] if c["type"] == "text/html"
-        )
+        description = "<br>".join(c["value"] for c in feedparser_item["content"] if c["type"] == "text/html")
 
     x = rss.RSSItem(
         title=feedparser_item["title"],
@@ -57,23 +60,25 @@ known_feeds = {
     "churning": FilteredFeed(
         url="http://reddit.project.samueltaylor.org/sub/churning",
         title_disqualifiers=["Thread - ", "- Week of"],
+        title_qualifiers=[],
     ),
     "highscalability": FilteredFeed(
         url="https://feeds.feedburner.com/HighScalability?format=xml",
-        title_disqualifiers=["Sponsored Post"],
+        title_disqualifiers=["Post: "],
+        title_qualifiers=[],
     ),
     "ourdailybears": FilteredFeed(
         url="http://www.ourdailybears.com/rss/current",
-        title_disqualifiers=[
-            "Game Thread",
-            "Podcast Episode",
-            "Open Thread",
-            "Facebook Live",
-        ],
+        title_disqualifiers=["Game Thread", "Podcast Episode", "Open Thread", "Facebook Live",],
+        title_qualifiers=[],
     ),
     "dappered": FilteredFeed(
-        url="https://dappered.com/feed/",
-        title_disqualifiers=["thanks to Dappered's advertisers"],
+        url="https://dappered.com/feed/", title_disqualifiers=["thanks to Dappered's advertisers"], title_qualifiers=[],
+    ),
+    "monitor_deals": FilteredFeed(
+        url="http://reddit.project.samueltaylor.org/sub/buildapcsales?limit=25",
+        title_disqualifiers=[],
+        title_qualifiers=["monitor"],
     ),
 }
 
@@ -98,8 +103,9 @@ def filter_feed(name):
             lastBuildDate=dt.datetime.utcnow(),
             items=[
                 build_rss_item(entry)
-                for entry in remove_items(
-                    input_feed["entries"], title_includes=feed.title_disqualifiers
+                for entry in include_items(
+                    remove_items(input_feed["entries"], title_includes=feed.title_disqualifiers),
+                    title_includes=feed.title_qualifiers,
                 )
             ],
         )
